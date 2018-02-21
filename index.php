@@ -3,24 +3,32 @@
 include 'simple_html_dom.php';
 require_once 'list_manga.php';
 
-$chapter = '31.2';
-$dataHtml = file_get_html('http://mangakakalot.com/chapter/qed_shoumei_shuuryou/chapter_'.$chapter);
 $mangaList = mangaList();
 set_time_limit(0);
 foreach ($mangaList as $web => $listManga) {
 	foreach($listManga as $title => $urlManga){
 		$dataHtml = file_get_html($urlManga);
-		if($web == 'mangakakalot'){
-			mangakakalot($dataHtml, $title);
+		if(empty($dataHtml)){
+			continue;
+		}
+		switch ($web) {
+			case 'mangakakalot':
+				mangakakalot($dataHtml, $title);
+				break;
+			case 'mangakita':
+				mangakita($dataHtml, $title);
+			default:
+				echo 'Site not registered';
+				break;
 		}
 	}
 }
 
 function mangakakalot($dataHtml = false, $title = ''){
-	if(!$dataHtml){
+	$rowChapterList = $dataHtml->find('div.chapter-list > div.row > a');
+	if(empty($rowChapterList)){
 		return false;
 	}
-	$rowChapterList = $dataHtml->find('div.chapter-list > div.row > a')/*->find('div.row')*//*->find('span', 0)*/;
 	foreach ($rowChapterList as $valueChapterList) {
 		$urlDetail = $valueChapterList->href;
 		$chapter = explode('/', $urlDetail);
@@ -30,6 +38,9 @@ function mangakakalot($dataHtml = false, $title = ''){
 		
 		$dataDetailHtml = file_get_html($urlDetail);
 		$dataDetail = $dataDetailHtml->find('div#vungdoc > img');
+		if(empty($dataDetail)){
+			continue;
+		}
 		echo 'Saving '.$chapterTitle.' : <br/>';
 		foreach ($dataDetail as $detail) {
 			$filename = preg_replace('/[^\da-z]/i', '_', $detail->title);
@@ -49,19 +60,38 @@ function mangakakalot($dataHtml = false, $title = ''){
 		echo '==========================END SAVING=========================<br/>';
 	}
 }
-/*$div = $dataHtml->find('div#vungdoc');
 
-foreach ($div as $key => $value) {
-	$img = $value->find('img');
-	foreach($img as $val){
-		$explode = explode('-', $val->src);
-		$filename = end($explode);
-		$dir = 'data/qed/'.$chapter.'/';
-		if(!file_exists($dir)){
-			mkdir($dir, 0777, true);
-		}
-		copy($val->src, $dir.$filename);
-		echo 'saved to : '.$dir.$filename.'<br/>';
+function mangakita($dataHtml = false, $title = ''){
+	$rowChapterList = $dataHtml->find('div#content > div.cl > ul > li > a');
+	if(empty($rowChapterList)){
+		return false;
 	}
-}*/
+	foreach ($rowChapterList as $rowChapter) {
+		$chapterTitle = str_replace(array(':','"'),'-',$rowChapter->innertext);
+		$urlDetail = $rowChapter->href;
+		
+		$detailHtml = file_get_html($urlDetail);
+		$imageList = $detailHtml->find('article > div#readerarea > img');
+		if(empty($imageList)){
+			continue;
+		}
+		echo 'Saving '.$chapterTitle.' : <br/>';
+		foreach($imageList as $image){
+			$filename = explode('/', $image->src);
+			$filename = end($filename);
+
+			$dir = 'data/'.$title.'/'.$chapterTitle.'/';
+			if(!file_exists($dir)){
+				mkdir($dir, 0777, true);
+			}
+			if(@copy($image->src, $dir.$filename)){
+				echo $filename.' saved to : '.$dir.$filename.'<br/>';
+			}else{
+				echo $filename.' failed to save<br/>';
+			}
+		}
+		echo '==========================END SAVING=========================<br/>';
+	}
+}
+
 ?>

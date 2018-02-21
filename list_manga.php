@@ -5,8 +5,12 @@ if(!function_exists('mangaList')){
 		$list = array(
 			/*From http://mangakakalot.com*/
 			'mangakakalot' => array(
-				// 'qed' => 'http://mangakakalot.com/manga/qed_shoumei_shuuryou/',
-				'cmb' => 'http://mangakakalot.com/manga/cmb',
+				/*'qed' => 'http://mangakakalot.com/manga/qed_shoumei_shuuryou/',
+				'cmb' => 'http://mangakakalot.com/manga/cmb',*/
+			),
+			/*From http://www.mangakita.net/*/
+			'mangakita' => array(
+				'the-promised-neverland' => 'http://www.mangakita.net/manga/the-promised-neverland/',
 			),
 		);
 		return $list;
